@@ -52,9 +52,12 @@ class Arena(Game):
 		curTime = time.time()
 		if curTime - self.lastIterated > Arena.SECONDS_PER_TURN:
 			print "tick!"
+			print "current # of players: %d" % len(self.players)
 			self.lastIterated = curTime
 			# then we process each player's move (in player order for now)
 			for player in self.players:
+				if player.nextMove == None:
+					continue
 				xOffset = 0
 				yOffset = 0
 				if player.nextMove == Move.LEFT:
@@ -74,9 +77,15 @@ class Arena(Game):
 				if newX >= 0 and newX < len(self.board[0]) and (
 						newY >= 0 and newY < len(self.board) and
 						self.board[newY][newX].contents == Cell.FLOOR and
-						self.board[newY][newX] == None):
+						self.board[newY][newX].player == None):
+					print "player move %s accepted!" % player.nextMove 
+					self.board[player.y][player.x].player = None
+					self.board[newY][newX].player = player 
 					player.x = newX
 					player.y = newY
+				else:
+					print "player move of %s not accepted!" % player.nextMove
+				player.nextMove = None
 
 	def addPlayer(self, playerId):
 		targetX = random.randint(0, 9)
@@ -88,6 +97,7 @@ class Arena(Game):
 			targetCell = self.board[targetY][targetX] 
 		newPlayer = Player(playerId, targetX, targetY) 
 		targetCell.player = newPlayer
+		self.players.append(newPlayer)
 
 	def removePlayer(self, playerId):
 		targetPlayer = None
@@ -120,7 +130,7 @@ class Arena(Game):
 			return
 		if stevent.key == ord('a') or stevent.key == ord('h'):
 			curPlayer.nextMove = Move.LEFT	
-		elif sevent.key == ord('d') or stevent.key == ord('l'):
+		elif stevent.key == ord('d') or stevent.key == ord('l'):
 			curPlayer.nextMove = Move.RIGHT	
 		elif stevent.key == ord('s') or stevent.key == ord('j'):
 			curPlayer.nextMove = Move.DOWN
