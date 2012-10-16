@@ -27,12 +27,40 @@ class Move:
 	LEFT = 'left'
 	RIGHT = 'right'	
 
-class Player:
+class Creature: 
+	PLAYER_TYPE = 0
+	GRIDBUG_TYPE = 1
+	PLAYER_HP = 8 
+	GRIDBUG_HP = 5
+	PLAYER_DODGE = 4 # must roll 4 or higher to hit
+	GRIDBUG_DODGE = 3
+	def __init__(self, x, y, type):
+		self.x = x
+		self.y = y
+		self.type = type
+		self.dead = False
+		self.reset()
+
+	def reset(self):
+		"""
+			set creature to initial state
+		"""
+		if self.type == Creature.PLAYER:
+			self.hp = Creature.PLAYER_HP 
+		elif self.type == Creature.GRIDBUG:
+			self.hp = Creature.GRIDBUG_HP
+		else:
+			print "unknown player type!"
+			return 1
+
+class Player(Creature):
 	def __init__(self, id, x, y):
+		Creature.__init__(self)
 		self.id = id
 		self.x = x
 		self.y = y 
 		self.nextMove = None
+		self.dodge = Creature.PLAYER_DODGE 
 
 class Arena(Game):
 	WIDTH = 10
@@ -47,6 +75,8 @@ class Arena(Game):
 				self.board[i][j].contents = Cell.FLOOR
 		self.startTime = time.time() 
 		self.lastIterated = self.startTime
+		self.creatures = []
+		self.curPlayerIndex = 0
 
 	def iterate(self):
 		curTime = time.time()
@@ -54,38 +84,56 @@ class Arena(Game):
 			print "tick!"
 			print "current # of players: %d" % len(self.players)
 			self.lastIterated = curTime
-			# then we process each player's move (in player order for now)
-			for player in self.players:
-				if player.nextMove == None:
-					continue
-				xOffset = 0
+			# then we process the next player's move 
+			if len(players) == 0:
+				return
+			player = self.players[self.curPlayerIndex] 			
+			if player.nextMove == None:
+				continue
+			xOffset = 0
+			yOffset = 0
+			if player.nextMove == Move.LEFT:
+				xOffset = -1
 				yOffset = 0
-				if player.nextMove == Move.LEFT:
-					xOffset = -1
-					yOffset = 0
-				elif player.nextMove == Move.RIGHT:
-					xOffset = 1
-					yOffset = 0
-				elif player.nextMove == Move.UP:
-					xOffset = 0
-					yOffset = -1	
-				elif player.nextMove == Move.DOWN: 
-					xOffset = 0
-					yOffset = 1
-				newX = player.x + xOffset
-				newY = player.y + yOffset
-				if newX >= 0 and newX < len(self.board[0]) and (
-						newY >= 0 and newY < len(self.board) and
-						self.board[newY][newX].contents == Cell.FLOOR and
-						self.board[newY][newX].player == None):
+			elif player.nextMove == Move.RIGHT:
+				xOffset = 1
+				yOffset = 0
+			elif player.nextMove == Move.UP:
+				xOffset = 0
+				yOffset = -1	
+			elif player.nextMove == Move.DOWN: 
+				xOffset = 0
+				yOffset = 1
+			newX = player.x + xOffset
+			newY = player.y + yOffset
+			if newX >= 0 and newX < len(self.board[0]) and (
+					newY >= 0 and newY < len(self.board) and
+					self.board[newY][newX].contents == Cell.FLOOR:
+				if self.board[newY][newX].player == None:
+					# if no one's there, we move there
 					print "player move %s accepted!" % player.nextMove 
 					self.board[player.y][player.x].player = None
 					self.board[newY][newX].player = player 
 					player.x = newX
 					player.y = newY
-				else:
-					print "player move of %s not accepted!" % player.nextMove
-				player.nextMove = None
+				else: 
+					# we attack that player standing there!
+					attacker = player
+					attackee = self.board[newY][newX].player
+					self.handleAttack(attacker, attackee) 	
+			else:
+				print "player move of %s not accepted!" % player.nextMove
+			player.nextMove = None
+			self.curPlayerIndex += 1
+			self.curPlayerIndex = self.curPlayerIndex % len(self.players)
+
+	def handleAttack(attacker, attackee): 
+		hitRoll = random.randint(0, 9)
+		damageRoll = random.randint(0, 9)
+		if hitRoll >= attackee.dodge: 
+			attackee.hp -= hitRoll
+			if atackee.hp < 0:
+				atackee.dead = True
 
 	def addPlayer(self, playerId):
 		targetX = random.randint(0, 9)
