@@ -1,43 +1,87 @@
 
+import os, sys
+sys.path.insert(0, os.path.join("..", "every", "common"))
+from asciipixel import AsciiPixel
+from screen import Screen
+
 class Display:
-	DEFAULT_MAPP_HEIGHT = 21
-	DEFAULT_MAPP_WIDTH = 21
+	DEFAULT_BOARD_HEIGHT = 21
+	DEFAULT_BOARD_WIDTH = 21
 	DEFAULT_EVENT_HEIGHT = 21
 	DEFAULT_EVENT_WIDTH = 59 
-	def __init__(self, mapp, events):
+	def __init__(self, board, events):
 		"""
 			a screen generator
 		"""
-		self.mappHeight = DEFAULT_MAPP_HEIGHT
-		self.mappWidth = DEFAULT_MAPP_WIDTH
-		self.eventHeight = DEFAULT_EVENT_HEIGHT
-		self.eventWidth = DEFAULT_EVENT_WIDTH
-		self.mapp = mapp
+		self.boardHeight = Display.DEFAULT_BOARD_HEIGHT
+		self.boardWidth = Display.DEFAULT_BOARD_WIDTH
+		self.eventHeight = Display.DEFAULT_EVENT_HEIGHT
+		self.eventWidth = Display.DEFAULT_EVENT_WIDTH
+		self.board = board
 		self.events = events
 
 	def getScreen(self, player):
-		mappDisplay = self.getMapDisplay(player) 
+		boardDisplay = self.getBoardDisplay(player) 
 		eventDisplay = self.getEventDisplay(player)  
+		retScreen = []
+		height = max(self.boardHeight, self.eventHeight)
+		for i in range(0, height):
+			retRow = []
+			for j in range(0, self.boardWidth):
+				retRow.append(boardDisplay[i][j])			 
+			for j in range(0, self.eventWidth):
+				retRow.append(eventDisplay[i][j]) 
+			retScreen.append(retRow)
+			retRow = []
+		return retScreen
 
-	def getMapDisplay(self, player):
+	def getBoardDisplay(self, player):
 		centerX = player.x
 		centerY = player.y
-		startX = player.x - (self.mappWidth - 1) / 2 
-		startY = player.y - (self.mappHeight - 1) / 2
-		mappDisplay = []
-		for i in range(startY, startY + self.mappHeight):
+		startX = player.x - (self.boardWidth - 1) / 2 
+		startY = player.y - (self.boardHeight - 1) / 2
+		boardDisplay = []
+		#FIXME: add sanity checks on dimensions
+		for i in range(startY, startY + self.boardHeight):
 			curRow = []
-			for j in range(startX, startX + self.mappWidth):
+			for j in range(startX, startX + self.boardWidth):
 				curPix = None
-				if self.mapp.isWithinBounds(j, i):
-					curPix = mapp[i][j].render()	
+				if self.isWithinBounds(j, i):
+					curPix = self.board[i][j].render()	
 				else:
 					curPix = AsciiPixel()  
 				curRow.append(curPix)
-			mappDisplay.append(curRow)
+			boardDisplay.append(curRow)
 			curRow = []
-		return mappDisplay
+		return boardDisplay
+
+	def isWithinBounds(self, x, y):
+		if x >= 0 and x < len(self.board[0]) and (
+				y >= 0 and y < len(self.board)):
+			return True
+		else:
+			return False
 
 	def getEventDisplay(self, player): 
-		#TODO
-		return None
+		"""
+			we'll print out the most recent events!
+		"""
+		eventDisplay = []
+		for i in range(-1, -1 * (self.eventHeight + 1), -1):
+			eventRow = []
+			if len(self.events) >= (-1 * i):
+				curEventStr = str(self.events[i]) 
+				for j in range(0, self.eventWidth):
+					curPix = None
+					if j < len(curEventStr):
+						curChar = curEventStr[j]
+						curPix = AsciiPixel(ord(curChar))
+					else:
+						curPix = AsciiPixel(ord(' '))
+					eventRow.append(curPix)
+			else:
+				for j in range(0, self.eventWidth):
+					curPix = AsciiPixel(ord(' '))
+					eventRow.append(curPix)
+			eventDisplay.append(eventRow)
+		return eventDisplay

@@ -13,6 +13,8 @@ from screen import Screen
 from asciipixel import AsciiPixel
 from stevent import Stevent
 
+from display import Display
+
 class Thing:
 	"""
 		all things are things.  a thing can be seen on the screen
@@ -25,8 +27,7 @@ class Thing:
 
 class Event:
 	"""
-		an in-game event like some dude hitting
-		another dude
+		an event to tell the users WTF
 	"""	
 	#TODO: events are currently for a news feed
 	#	i think events should eventually be how all state-changes happen
@@ -59,6 +60,9 @@ class Event:
 			return "%s has died!" % self.participants[0]
 		else:
 			return "OH NO!  WHAT KIND OF EVENT IS THIS?  FREAK OUT!"
+
+	def __str__(self):
+		return repr(self)
 
 class Cell(Thing):
 	WALL = 'W', AsciiPixel.WHITE 
@@ -277,6 +281,19 @@ class Arena(Game):
 				curPlayer.id, curPlayer.nextMove) 
 
 	def getScreen(self, playerId): 
+		player = self.getPlayer(playerId)
+		display = Display(self.board, self.events)	
+		player = self.getPlayer(playerId)
+		curScreen = display.getScreen(player)
+		return curScreen
+
+
+
+
+
+
+	"""
+	def getScreen(self, playerId): 
 		rowList = []
 		curRow = []
 		for row in self.board:
@@ -289,4 +306,5 @@ class Arena(Game):
 			curRow = []
 		screen = Screen(rowList)
 		return screen
+	"""
 
