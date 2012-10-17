@@ -16,10 +16,29 @@ from stevent import Stevent
 class Cell:
 	WALL = 'W'
 	FLOOR = '.'
-	def __init__(self, contents = 'W'):
+	def __init__(self, feature = None):
+		if feature == None:
+			feature = Cell.WALL
 		self.player = None
 		self.objects = []
-		self.contents = contents
+		self.feature = feature 
+
+	def render(self):
+		"""
+			return an ascii-pixel representation of yourself
+		"""
+		ret = None
+		if self.player != None:
+			ret = AsciiPixel('@') 	
+		elif len(self.objects) > 0:
+			#TODO: implement called data members 
+			ret = AsciiPixel(self.objects[-1].ascii, self.objects[-1].asciiColor) 
+		else:
+			# if there's no player there, and there aren't any objects on the ground
+			# then print the kind of cell
+			ret = AsciiPixel(self.feature)
+		return ret
+
 
 class Move:
 	UP = 'up'
@@ -72,7 +91,7 @@ class Arena(Game):
 				for i in range(Arena.HEIGHT)]
 		for i in range(2, 8):
 			for j in range(2, 8):
-				self.board[i][j].contents = Cell.FLOOR
+				self.board[i][j].feature = Cell.FLOOR
 		self.startTime = time.time() 
 		self.lastIterated = self.startTime
 		self.creatures = []
@@ -108,7 +127,7 @@ class Arena(Game):
 			newY = player.y + yOffset
 			if newX >= 0 and newX < len(self.board[0]) and (
 					newY >= 0 and newY < len(self.board) and
-					self.board[newY][newX].contents == Cell.FLOOR:
+					self.board[newY][newX].feature == Cell.FLOOR:
 				if self.board[newY][newX].player == None:
 					# if no one's there, we move there
 					print "player move %s accepted!" % player.nextMove 
@@ -139,7 +158,7 @@ class Arena(Game):
 		targetX = random.randint(0, 9)
 		targetY = random.randint(0, 9) 
 		targetCell = self.board[targetY][targetX] 
-		while targetCell.player != None or targetCell.contents != Cell.FLOOR:
+		while targetCell.player != None or targetCell.feature != Cell.FLOOR:
 			targetX = random.randint(0, 9)
 			targetY = random.randint(0, 9)
 			targetCell = self.board[targetY][targetX] 
@@ -192,7 +211,7 @@ class Arena(Game):
 		for row in self.board:
 			for cell in row:
 				if cell.player == None:
-					curRow.append(AsciiPixel(ord(cell.contents), AsciiPixel.WHITE)) 
+					curRow.append(AsciiPixel(ord(cell.feature), AsciiPixel.WHITE)) 
 				else:
 					curRow.append(AsciiPixel(ord('@'), AsciiPixel.BLUE)) 
 			rowList.append(curRow)
