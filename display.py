@@ -70,7 +70,8 @@ class Display:
 			we'll print out the most recent events!
 		"""
 		eventDisplay = []
-		for i in range(-1, -1 * (self.eventHeight + 1), -1):
+		#for i in range(-1, -1 * (self.eventHeight + 1), -1):
+		for i in range(-1 * (self.eventHeight + 1), -1):
 			eventRow = []
 			if len(self.events) >= (-1 * i):
 				curEventStr = str(self.events[i]) 

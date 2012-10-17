@@ -164,6 +164,8 @@ class Arena(Game):
 		# then we process the next player's move 
 		if len(self.creatures) == 0:
 			return
+		# at the last minute we update the index just in case someone quit
+		self.curCreatureIndex = self.curCreatureIndex % len(self.creatures)
 		creature = self.creatures[self.curCreatureIndex] 			
 		if creature.type != 'player':
 			creature.getNextMove()
@@ -211,6 +213,11 @@ class Arena(Game):
 			print "creature move of %s not accepted!" % creature.nextMove
 		creature.nextMove = None
 		self.incrementTurn()
+		creature = self.creatures[self.curCreatureIndex] 			
+		#TODO: does python really not have a do-while?
+		while creature.dead:
+			self.incrementTurn()
+			creature = self.creatures[self.curCreatureIndex] 			
 
 	def incrementTurn(self):
 		self.curCreatureIndex += 1
@@ -232,7 +239,8 @@ class Arena(Game):
 					hitRoll)))	
 			attackee.hp -= hitRoll
 			if attackee.hp < 0:
-				attackee.dead = True #TODO: then the attackee becomes an object 
+				# atackee dies
+				self.removePC(attackee)
 				self.events.append(Event(
 						Event.DEATH_TYPE, "player%d" % attackee.id))
 		else:
@@ -265,9 +273,30 @@ class Arena(Game):
 			print 'unable to find player to remove'
 			return
 		self.creatures.remove(targetPlayer)
-		targetCell = self.board[targetPlayer.y][targetPlayer.x]
-		targetCell.creature = None
+		if not targetPlayer.dead:
+			targetCell = self.board[targetPlayer.y][targetPlayer.x]
+			targetCell.creature = None
 		return
+
+	def removePC(self, player):
+		"""
+			the player is still present, but their PC has died
+			TODO: also add checking for this having happened
+			inside removePlayer  
+	
+			either playerId or player are sufficient arguments
+		"""
+		# is player a playerId?  if so, we need to find the actual player 
+		if isinstance(player, int):
+			for creature in self.creatures:
+				if creature.type == 'player' and creature.id == playerId:
+					player = creature
+		if player == None:
+			print 'could not find PC to remove'
+		else:
+			player.dead = True
+			targetCell = self.board[player.y][player.x]
+			targetCell.creature = None			
 
 	def getPlayer(self, playerId):
 		for creature in self.creatures:
@@ -278,7 +307,7 @@ class Arena(Game):
 
 	def handleInput(self, stevent, playerId):
 		curPlayer = self.getPlayer(playerId)
-		if curPlayer == None:
+		if curPlayer == None or curPlayer.dead:
 			return
 		if stevent.type == Stevent.QUIT:
 			print "###ATTEMPTING TO REMOVE PLAYER %d" % playerId
