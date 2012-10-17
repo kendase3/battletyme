@@ -249,7 +249,7 @@ class Arena(Game):
 		if targetPlayer == None:
 			print 'unable to find player to remove'
 			return
-		self.players.remove(targetPlayer)
+		self.creatures.remove(targetPlayer)
 		targetCell = self.board[targetPlayer.y][targetPlayer.x]
 		targetCell.creature = None
 		return
@@ -266,6 +266,7 @@ class Arena(Game):
 		if curPlayer == None:
 			return
 		if stevent.type == Stevent.QUIT:
+			print "###ATTEMPTING TO REMOVE PLAYER %d" % playerId
 			self.removePlayer(playerId)
 			return
 		if stevent.type != Stevent.KEYDOWN:
