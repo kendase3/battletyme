@@ -86,7 +86,8 @@ class Cell(Thing):
 			#TODO: implement called data members 
 			ret = AsciiPixel(self.objects[-1].ascii, self.objects[-1].asciiColor) 
 		else:
-			# if there's no player there, and there aren't any objects on the ground
+			# if there's no player there, and 
+			# there aren't any objects on the ground
 			# then print the kind of cell
 			ret = AsciiPixel(self.ascii, self.asciiColor)
 		return ret

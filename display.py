@@ -23,7 +23,7 @@ class Display:
 	def getScreen(self, player):
 		boardDisplay = self.getBoardDisplay(player) 
 		eventDisplay = self.getEventDisplay(player)  
-		retScreen = []
+		retPixels = []
 		height = max(self.boardHeight, self.eventHeight)
 		for i in range(0, height):
 			retRow = []
@@ -31,8 +31,9 @@ class Display:
 				retRow.append(boardDisplay[i][j])			 
 			for j in range(0, self.eventWidth):
 				retRow.append(eventDisplay[i][j]) 
-			retScreen.append(retRow)
+			retPixels.append(retRow)
 			retRow = []
+		retScreen = Screen(retPixels)
 		return retScreen
 
 	def getBoardDisplay(self, player):
@@ -41,7 +42,6 @@ class Display:
 		startX = player.x - (self.boardWidth - 1) / 2 
 		startY = player.y - (self.boardHeight - 1) / 2
 		boardDisplay = []
-		#FIXME: add sanity checks on dimensions
 		for i in range(startY, startY + self.boardHeight):
 			curRow = []
 			for j in range(startX, startX + self.boardWidth):
