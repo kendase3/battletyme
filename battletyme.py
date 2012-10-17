@@ -37,9 +37,11 @@ class Event:
 	HIT_TYPE = 2
 	MISS_TYPE = 3 
 	DEATH_TYPE = 4 
+	TURN_TYPE = 5
+	MOVE_TYPE = 6
 	def __init__(self, type=None, participants=None):
 		if type == None:
-			type = NOTHING_TYPE
+			type = Event.NOTHING_TYPE
 		self.type = type
 		self.participants = participants
 	
@@ -57,7 +59,13 @@ class Event:
 			return "%s swings and misses %s" %(
 					self.participants[0], self.participants[1])
 		elif self.type == Event.DEATH_TYPE:
-			return "%s has died!" % self.participants[0]
+			return "%s has died!" % self.participants
+		elif self.type == Event.TURN_TYPE:
+			return "It is now %d's turn." % self.participants
+		elif self.type == Event.MOVE_TYPE:
+			return "player%d has moved %s" % (
+					self.participants[0],
+					self.participants[1]) 
 		else:
 			return "OH NO!  WHAT KIND OF EVENT IS THIS?  FREAK OUT!"
 
@@ -161,6 +169,8 @@ class Arena(Game):
 			creature.getNextMove()
 		if creature.nextMove == None:
 			print 'The current player did not move!'
+			nothingEvent = Event()
+			self.events.append(nothingEvent)
 			self.incrementTurn()
 			return
 		xOffset = 0
@@ -185,6 +195,9 @@ class Arena(Game):
 			if self.board[newY][newX].creature == None:
 				# if no one's there, we move there
 				print "creature move %s accepted!" % creature.nextMove 
+				moveEvent = Event(Event.MOVE_TYPE, 
+						(creature.id, creature.nextMove)) 
+				self.events.append(moveEvent)
 				self.board[creature.y][creature.x].creature = None
 				self.board[newY][newX].creature = creature 
 				creature.x = newX
@@ -202,6 +215,8 @@ class Arena(Game):
 	def incrementTurn(self):
 		self.curCreatureIndex += 1
 		self.curCreatureIndex = self.curCreatureIndex % len(self.creatures)
+		turnEvent = Event(Event.TURN_TYPE, (self.curCreatureIndex))  
+		self.events.append(turnEvent)
 
 	def handleAttack(self, attacker, attackee): 
 		self.events.append(Event(Event.ATTACK_TYPE, (

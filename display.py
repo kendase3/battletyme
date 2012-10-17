@@ -37,6 +37,9 @@ class Display:
 		return retScreen
 
 	def getBoardDisplay(self, player):
+		if player == None:
+			# can happen if they recently disconnected
+			return
 		centerX = player.x
 		centerY = player.y
 		startX = player.x - (self.boardWidth - 1) / 2 
