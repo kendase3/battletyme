@@ -28,6 +28,8 @@ class Thing:
 class Event:
 	"""
 		an event to tell the users WTF
+		it is not used for game logic purposes,
+		just for news items in the event ticker
 	"""	
 	#TODO: events are currently for a news feed
 	#	i think events should eventually be how all state-changes happen
@@ -213,16 +215,14 @@ class Arena(Game):
 			print "creature move of %s not accepted!" % creature.nextMove
 		creature.nextMove = None
 		self.incrementTurn()
-		creature = self.creatures[self.curCreatureIndex] 			
-		#TODO: does python really not have a do-while?
-		while creature.dead:
-			self.incrementTurn()
-			creature = self.creatures[self.curCreatureIndex] 			
 
 	def incrementTurn(self):
-		self.curCreatureIndex += 1
-		self.curCreatureIndex = self.curCreatureIndex % len(self.creatures)
-		turnEvent = Event(Event.TURN_TYPE, (self.curCreatureIndex))  
+		curCreature = None 
+		while curCreature == None or curCreature.dead:
+			self.curCreatureIndex += 1
+			self.curCreatureIndex = self.curCreatureIndex % len(self.creatures)
+			curCreature = self.creatures[self.curCreatureIndex] 
+		turnEvent = Event(Event.TURN_TYPE, curCreature.id)  
 		self.events.append(turnEvent)
 
 	def handleAttack(self, attacker, attackee): 
@@ -307,11 +307,13 @@ class Arena(Game):
 
 	def handleInput(self, stevent, playerId):
 		curPlayer = self.getPlayer(playerId)
-		if curPlayer == None or curPlayer.dead:
+		if curPlayer == None:
 			return
 		if stevent.type == Stevent.QUIT:
 			print "###ATTEMPTING TO REMOVE PLAYER %d" % playerId
 			self.removePlayer(playerId)
+			return
+		if curPlayer.dead:
 			return
 		if stevent.type != Stevent.KEYDOWN:
 			return
