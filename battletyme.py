@@ -13,30 +13,41 @@ from screen import Screen
 from asciipixel import AsciiPixel
 from stevent import Stevent
 
-class Cell:
-	WALL = 'W'
-	FLOOR = '.'
-	def __init__(self, feature = None):
-		if feature == None:
-			feature = Cell.WALL
-		self.player = None
+class Thing:
+	"""
+		all things are things.  a thing can be seen on the screen
+	"""
+	def __init__(self, ascii='?', asciiColor=None):
+		if asciiColor == None:
+			asciiColor = AsciiPixel.WHITE 
+		self.ascii = ascii
+		self.asciiColor = asciiColor
+
+class Cell(Thing):
+	WALL = 'W', AsciiPixel.WHITE 
+	FLOOR = '.', AsciiPixel.WHITE 
+	def __init__(self, type = None):
+		if type == None:
+			type = Cell.WALL
+		Thing.__init__(type[0], type[1])  
+		self.creature = None
 		self.objects = []
-		self.feature = feature 
+		self.type = type 
 
 	def render(self):
 		"""
 			return an ascii-pixel representation of yourself
 		"""
 		ret = None
-		if self.player != None:
-			ret = AsciiPixel('@') 	
+		if self.creature != None:
+			ret = AsciiPixel(self.creature.ascii, self.creature.asciiColor) 	
 		elif len(self.objects) > 0:
 			#TODO: implement called data members 
 			ret = AsciiPixel(self.objects[-1].ascii, self.objects[-1].asciiColor) 
 		else:
 			# if there's no player there, and there aren't any objects on the ground
 			# then print the kind of cell
-			ret = AsciiPixel(self.feature)
+			ret = AsciiPixel(self.ascii, self.asciiColor)
 		return ret
 
 
@@ -46,105 +57,93 @@ class Move:
 	LEFT = 'left'
 	RIGHT = 'right'	
 
-class Creature: 
-	PLAYER_TYPE = 0
-	GRIDBUG_TYPE = 1
-	PLAYER_HP = 8 
-	GRIDBUG_HP = 5
-	PLAYER_DODGE = 4 # must roll 4 or higher to hit
-	GRIDBUG_DODGE = 3
-	def __init__(self, x, y, type):
+class Creature(Thing): 
+	"""
+		eventually i'll have non-player participants!
+	"""
+	def __init__(self, x, y, type, maxHp):
 		self.x = x
 		self.y = y
 		self.type = type
 		self.dead = False
-		self.reset()
-
-	def reset(self):
-		"""
-			set creature to initial state
-		"""
-		if self.type == Creature.PLAYER:
-			self.hp = Creature.PLAYER_HP 
-		elif self.type == Creature.GRIDBUG:
-			self.hp = Creature.GRIDBUG_HP
-		else:
-			print "unknown player type!"
-			return 1
+		self.maxHp = maxHp
+		self.hp = maxHp
 
 class Player(Creature):
 	def __init__(self, id, x, y):
-		Creature.__init__(self)
+		Creature.__init__(self, x, y, 'player', 10)
 		self.id = id
-		self.x = x
-		self.y = y 
 		self.nextMove = None
-		self.dodge = Creature.PLAYER_DODGE 
+		self.dodge = 5 
+		self.ascii = '@'
+		self.asciiColor = AsciiPixel.BLUE
 
 class Arena(Game):
 	WIDTH = 10
 	HEIGHT = 10
 	SECONDS_PER_TURN = 2
 	def __init__(self):
-		self.players = []
+		self.creatures = []
 		self.board = [[Cell() for j in range(Arena.WIDTH)]
 				for i in range(Arena.HEIGHT)]
 		for i in range(2, 8):
 			for j in range(2, 8):
-				self.board[i][j].feature = Cell.FLOOR
+				self.board[i][j].type = Cell.FLOOR
 		self.startTime = time.time() 
 		self.lastIterated = self.startTime
-		self.creatures = []
 		self.curPlayerIndex = 0
 
 	def iterate(self):
 		curTime = time.time()
 		if curTime - self.lastIterated > Arena.SECONDS_PER_TURN:
-			print "tick!"
-			print "current # of players: %d" % len(self.players)
-			self.lastIterated = curTime
-			# then we process the next player's move 
-			if len(players) == 0:
-				return
-			player = self.players[self.curPlayerIndex] 			
-			if player.nextMove == None:
-				continue
-			xOffset = 0
+			self.handleTurn()
+
+	def handleTurn(self):
+		print "tick!"
+		print "current # of creatures: %d" % len(self.creatures)
+		self.lastIterated = curTime
+		# then we process the next player's move 
+		if len(self.creatures) == 0:
+			return
+		creature = self.creatures[self.curCreatureIndex] 			
+		if player.nextMove == None:
+			continue
+		xOffset = 0
+		yOffset = 0
+		if player.nextMove == Move.LEFT:
+			xOffset = -1
 			yOffset = 0
-			if player.nextMove == Move.LEFT:
-				xOffset = -1
-				yOffset = 0
-			elif player.nextMove == Move.RIGHT:
-				xOffset = 1
-				yOffset = 0
-			elif player.nextMove == Move.UP:
-				xOffset = 0
-				yOffset = -1	
-			elif player.nextMove == Move.DOWN: 
-				xOffset = 0
-				yOffset = 1
-			newX = player.x + xOffset
-			newY = player.y + yOffset
-			if newX >= 0 and newX < len(self.board[0]) and (
-					newY >= 0 and newY < len(self.board) and
-					self.board[newY][newX].feature == Cell.FLOOR:
-				if self.board[newY][newX].player == None:
-					# if no one's there, we move there
-					print "player move %s accepted!" % player.nextMove 
-					self.board[player.y][player.x].player = None
-					self.board[newY][newX].player = player 
-					player.x = newX
-					player.y = newY
-				else: 
-					# we attack that player standing there!
-					attacker = player
-					attackee = self.board[newY][newX].player
-					self.handleAttack(attacker, attackee) 	
-			else:
-				print "player move of %s not accepted!" % player.nextMove
-			player.nextMove = None
-			self.curPlayerIndex += 1
-			self.curPlayerIndex = self.curPlayerIndex % len(self.players)
+		elif player.nextMove == Move.RIGHT:
+			xOffset = 1
+			yOffset = 0
+		elif player.nextMove == Move.UP:
+			xOffset = 0
+			yOffset = -1	
+		elif player.nextMove == Move.DOWN: 
+			xOffset = 0
+			yOffset = 1
+		newX = player.x + xOffset
+		newY = player.y + yOffset
+		if newX >= 0 and newX < len(self.board[0]) and (
+				newY >= 0 and newY < len(self.board) and
+				self.board[newY][newX].type == Cell.FLOOR:
+			if self.board[newY][newX].player == None:
+				# if no one's there, we move there
+				print "player move %s accepted!" % player.nextMove 
+				self.board[player.y][player.x].player = None
+				self.board[newY][newX].player = player 
+				player.x = newX
+				player.y = newY
+			else: 
+				# we attack that player standing there!
+				attacker = player
+				attackee = self.board[newY][newX].player
+				self.handleAttack(attacker, attackee) 	
+		else:
+			print "player move of %s not accepted!" % player.nextMove
+		player.nextMove = None
+		self.curCreatureIndex += 1
+		self.curCreatureIndex = self.curCreatureIndex % len(self.creatures)
 
 	def handleAttack(attacker, attackee): 
 		hitRoll = random.randint(0, 9)
@@ -152,13 +151,13 @@ class Arena(Game):
 		if hitRoll >= attackee.dodge: 
 			attackee.hp -= hitRoll
 			if atackee.hp < 0:
-				atackee.dead = True
+				atackee.dead = True #TODO: then the attackee becomes an object 
 
 	def addPlayer(self, playerId):
 		targetX = random.randint(0, 9)
 		targetY = random.randint(0, 9) 
 		targetCell = self.board[targetY][targetX] 
-		while targetCell.player != None or targetCell.feature != Cell.FLOOR:
+		while targetCell.player != None or targetCell.type != Cell.FLOOR:
 			targetX = random.randint(0, 9)
 			targetY = random.randint(0, 9)
 			targetCell = self.board[targetY][targetX] 
@@ -181,8 +180,8 @@ class Arena(Game):
 		return
 
 	def getPlayer(self, playerId):
-		for player in self.players:
-			if player.id == playerId:
+		for creature in self.creatures:
+			if creature.type == 'player' and player.id == playerId:
 				return player
 		return None
 
@@ -210,10 +209,10 @@ class Arena(Game):
 		curRow = []
 		for row in self.board:
 			for cell in row:
-				if cell.player == None:
-					curRow.append(AsciiPixel(ord(cell.feature), AsciiPixel.WHITE)) 
+				if cell.creature == None:
+					curRow.append(AsciiPixel(ord(cell.ascii), cell.asciiColor)) 
 				else:
-					curRow.append(AsciiPixel(ord('@'), AsciiPixel.BLUE)) 
+					curRow.append(AsciiPixel(ord(cell.player.ascii), cell.player.asciiColor)) 
 			rowList.append(curRow)
 			curRow = []
 		screen = Screen(rowList)
