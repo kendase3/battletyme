@@ -149,10 +149,13 @@ class Arena(Game):
 		self.curCreatureIndex = 0
 		self.events = []
 
-	def iterate(self):
-		curTime = time.time()
+	def trimEvents(self):
 		if len(self.events) > Arena.EVENT_LIMIT:
 			self.events = self.events[(-1 * Arena.EVENT_LIMIT):]
+
+	def iterate(self):
+		curTime = time.time()
+		self.trimEvents()
 		if curTime - self.lastIterated > Arena.SECONDS_PER_TURN:
 			self.handleTurn()
 			print "New Turn!  Current player=%d" % self.curCreatureIndex 
