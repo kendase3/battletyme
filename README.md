@@ -1,4 +1,4 @@
 battletyme
 =======
 
-a multi-player roguelike using every and mappenstance
+a small demo game using every
