@@ -7,12 +7,13 @@ import time, random, os, sys
 
 sys.path.insert(0, os.path.join("..", "every", "common"))
 
-# locals 
+# from every/common 
 from game import Game
 from screen import Screen
 from asciipixel import AsciiPixel
 from stevent import Stevent
 
+# locals 
 from display import Display
 
 class Thing:
@@ -31,9 +32,6 @@ class Event:
 		it is not used for game logic purposes,
 		just for news items in the event ticker
 	"""	
-	#TODO: events are currently for a news feed
-	#	i think events should eventually be how all state-changes happen
-	#	such as movement etc. 
 	NOTHING_TYPE = 0
 	ATTACK_TYPE = 1 
 	HIT_TYPE = 2
@@ -336,23 +334,4 @@ class Arena(Game):
 		return curScreen
 
 
-
-
-
-
-	"""
-	def getScreen(self, playerId): 
-		rowList = []
-		curRow = []
-		for row in self.board:
-			for cell in row:
-				if cell.creature == None:
-					curRow.append(AsciiPixel(ord(cell.ascii), cell.asciiColor)) 
-				else:
-					curRow.append(AsciiPixel(ord(cell.creature.ascii), cell.creature.asciiColor)) 
-			rowList.append(curRow)
-			curRow = []
-		screen = Screen(rowList)
-		return screen
-	"""
 
